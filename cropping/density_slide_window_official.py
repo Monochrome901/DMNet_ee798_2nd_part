@@ -29,16 +29,26 @@ python density_slide_window_official.py . height_width threshold --output_folder
 
 def get_dynamic_threshold(annotation_file):
     """
-    Determine the threshold based on average bounding box size from 'annotations' folder.
+    Determine a dynamic threshold based on the maximum average bounding box size
+    from the 'annotations' folder. The threshold increases linearly from 0.02 to 0.1
+    as max(width, height) changes from 0 to 100.
+    
     :param annotation_file: Path to the annotation file in 'annotations'
     :return: Adjusted threshold value
     """
     avg_width, avg_height = calculate_avg_bbox_size(annotation_file)
 
-    # If both dimensions exceed 55, reduce threshold to 0.03
-    if avg_width > 55 and avg_height > 55:
-        return 0.03
-    return 0.08
+    # Calculate max dimension of the average bounding box
+    max_dimension = max(avg_width, avg_height)
+
+    # Linearly interpolate threshold between 0.02 and 0.1
+    threshold = 0.02 + (0.1 - 0.02) * (max_dimension / 100)
+    
+    # Clamp the threshold to the range [0.02, 0.1]
+    threshold = max(0.02, min(0.1, threshold))
+    
+    return threshold
+
 
 
 def measure_hit_rate_on_data(file_list, window_size, output_dir, mode="train"):
